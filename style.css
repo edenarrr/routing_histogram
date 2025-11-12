@@ -1,18 +1,45 @@
+/* General Body Styles */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #fafafa;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  padding: 2rem 1rem; /* Adds space on the top/bottom and sides */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8f9fa; /* Light gray background */
+  color: #212529; /* Dark text for high contrast */
+  text-align: center; /* Center-aligns the canvas inside its container */
 }
 
-#instructions {
-  position: absolute;
-  top: 10px;
-  width: 100%;
-  text-align: center;
+/* The main container that centers the content */
+.content-wrapper {
+  max-width: 900px; /* Sets the maximum width of your content area */
+  margin: 0 auto;   /* This is the key to centering the block */
+  text-align: left;  /* Resets text alignment for the text inside */
+}
+
+/* Header section for the title and paragraph */
+.intro-header {
+  margin-bottom: 2.5rem; /* Creates space between the text and the app */
+  border-bottom: 1px solid #dee2e6; /* Subtle separator line */
+  padding-bottom: 2rem;
+}
+
+.intro-header h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.intro-header p {
   font-size: 1.1rem;
-  color: #333;
+  line-height: 1.7; /* More line spacing for easier reading */
+  color: #495057; /* A slightly softer text color */
+}
+
+/* This is where your p5.js canvas will go */
+#canvas-container {
+  /* Add a subtle shadow to lift the app off the page */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  /* If your canvas has a border, this will look nice */
+  border-radius: 8px;
+  overflow: hidden; /* Ensures the canvas corners are rounded if you set a radius */
+  display: inline-block; /* Helps the container fit the canvas size */
 }
