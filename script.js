@@ -1,5 +1,44 @@
+// --- Vertex class ---
+class Vertex {
+    constructor(x, y, id) {
+        this.x = x;
+        this.y = y;
+        this.id = id;
+
+        // Geometry / classification
+        this.cv = null;  // corresponding vertex
+        this.isLeftVertex = false;
+        this.isRightVertex = false;
+        this.isReflex = false;
+        this.isConvex = false;
+        this.type = null;  // {'l-reflex', 'l-convex', 'r-reflex', 'r-convex'}
+
+        // Visibility graph
+        this.neighbors = [];
+        this.l_v = null;  // ℓ(v)
+        this.r_v = null;  // r(v)
+
+        // Routing data
+        this.routingTable = {higher_is_l: null};  // single-bit routing table
+        this.breakpoint = null;  // br(v)
+        this.label = {id: id, brId: null};
+    }
+
+    addNeighbor(v) {
+        if (!this.neighbors.includes(v)) {
+            this.neighbors.push(v);
+        }
+    }
+
+    isNeighbor(v) {
+        return this.neighbors.includes(v);
+    }
+}
+
+// --- Global Variables ---
+
 let vertices = [];
-let edges = [];      // horizontal edges for breakpoint computation
+let edges = [];  // horizontal edges for breakpoint computation
 let startVertex = null;
 let targetVertex = null;
 let currentVertex = null;
@@ -133,22 +172,22 @@ function resetSketch() {
 
     // Fixed histogram polygon (counterclockwise from left base vertex 0)
     vertices = [
-        { x:  50, y:  50, id: 0 },   // top-left base
-        { x:  50, y: 550, id: 1 },
-        { x: 150, y: 550, id: 2 },
-        { x: 150, y: 200, id: 3 },
-        { x: 250, y: 200, id: 4 },
-        { x: 250, y: 350, id: 5 },
-        { x: 350, y: 350, id: 6 },
-        { x: 350, y: 150, id: 7 },
-        { x: 450, y: 150, id: 8 },
-        { x: 450, y: 450, id: 9 },
-        { x: 550, y: 450, id: 10 },
-        { x: 550, y: 250, id: 11 },
-        { x: 650, y: 250, id: 12 },
-        { x: 650, y: 550, id: 13 },
-        { x: 750, y: 550, id: 14 },
-        { x: 750, y:  50, id: 15 }   // top-right base
+        new Vertex( 50, 50, 0),   // top-left base
+        new Vertex( 50, 550, 1),
+        new Vertex(150, 550, 2),
+        new Vertex(150, 200, 3),
+        new Vertex(250, 200, 4),
+        new Vertex(250, 350, 5),
+        new Vertex(350, 350, 6),
+        new Vertex(350, 150, 7),
+        new Vertex(450, 150, 8),
+        new Vertex(450, 450, 9),
+        new Vertex(550, 450,10),
+        new Vertex(550, 250,11),
+        new Vertex(650, 250,12),
+        new Vertex(650, 550,13),
+        new Vertex(750, 550,14),
+        new Vertex(750, 50,15)    // top-right base
     ];
 
 
@@ -254,29 +293,20 @@ function classifyVerticesAndEdges() {
         const next = vertices[(i + 1) % n];
         const prev = vertices[(i - 1 + n) % n];
 
-        v.cv = null;
-        v.isLeftVertex = false;
-        v.isRightVertex = false;
-
         if (v.y === next.y) {
             // v -- next is a horizontal edge, v is left, next is right
-            v.isLeftVertex = true;
+            v.isLeftVertex  = true;
             next.isRightVertex = true;
-            v.cv = next;
+            v.cv   = next;
             next.cv = v;
 
-            edges.push({
-                left: v,
-                right: next,
-                y: v.y
-            });
+            edges.push({ left: v, right: next, y: v.y });
         } else if (prev.y === v.y) {
             // prev -- v is a horizontal edge, prev is left, v is right
             prev.isLeftVertex = true;
-            v.isRightVertex = true;
-            v.cv = prev;
+            v.isRightVertex   = true;
+            v.cv   = prev;
             prev.cv = v;
-
             // edge already added when processing prev
         }
     }
@@ -317,8 +347,8 @@ function computeNeighborsAndBounds() {
             const vi = vertices[i];
             const vj = vertices[j];
             if (isRectilinearVisible(vi, vj)) {
-                vi.neighbors.push(vj);
-                vj.neighbors.push(vi);
+                vi.addNeighbor(vj);
+                vj.addNeighbor(vi);
             }
         }
     }
@@ -357,7 +387,8 @@ function computeBreakpointsAndLabels() {
     // For l-reflex and right base vertices: symmetric to the left.
     for (const v of vertices) {
         v.breakpoint = null;
-        v.label = { id: v.id, brId: null };
+        v.label.id   = v.id;
+        v.label.brId = null;
     }
 
     const topBaseLeft = vertices[0];
@@ -483,7 +514,7 @@ function route() {
     }
 
     // Case 1: Target is a direct neighbor.
-    if (s.neighbors.some(n => n.id === t.id)) {
+    if (s.isNeighbor(t)) {
         nextVertex = t;
     } else {
         // Check if t is in the interval I(s) = [ℓ(s), r(s)] (by indices).
