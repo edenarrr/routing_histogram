@@ -65,6 +65,68 @@
 </header>
     </header>
 
+    <!-- P5 canvas + controls -->
+    <div id="canvas-container" class="canvas-wrapper"></div>
+
+    <h2>Routing algorithm explanation</h2>
+    <p>
+      The goal of the algorithm is to find the shortest path from any vertex s to any vertex t using only local information. The routing uses rectilinear visibility.
+    </p>
+
+    <h3>Preprocessing</h3>
+    At first, the algorithm needs to preprocess each vertex. Here is the preprocessed information:
+    <ul>
+      <li><strong>Label lab(v): </strong></li>
+      <ul>
+        <li>lab(v) = v_id, if v is not a base vertex and a convex vertex</li>
+        <li>lab(v) = (v_id, br(v)_id), if v is a base vertex or a reflex vertex</li>
+      </ul>
+      <li><strong>Routing table p(v): </strong>a bit that says whether \( \ell(s) \) is higher than r(v) or not</li>
+      <li><strong>Link table: </strong>a list of lables of all r-visible neighbors</li>
+      <li><strong>Landmarks: </strong></li>
+      <ul>
+        <li><strong>cv(v): </strong>corresponding vertex (other endpoint of its horizontal edge)</li>
+        <li><strong>\( \ell(v) \): </strong>leftmost visible vertex</li>
+        <li><strong>r(v): </strong>rightmost visible vertex</li>
+        <li><strong>br(v): </strong>breakpoint (only computed for reflex vertices or base vertices)</li>
+        <ul>
+          <li>if v is an r-reflex vertex or the left base vertex, br(v) is the left endpoint of the horizontal edge with the highest y coordinate to the right of and below v visible from v</li>
+          <li>if v is an l-reflex vertex or the right base vertex, br(v) is the right endpoint of the horizontal edge with the highest y coordinate to the left of and below v visible from v</li>
+        </ul>
+      </ul>
+    </ul>
+
+    <h3>Routing algorithm</h3>
+    The key concept in this algorithm is the interval I(s) = [\( \ell(s) \), r(s)]
+    The question we ask ourselves is: "Is the target t inside I(s)?"
+
+    <h4>Case 1: t is a neighbor of s</h4>
+    Then go directly to t!
+
+    <h4>Case 2: Target t is outside the interval I(s)</h4>
+    That means the current vertex is inside a "pocket" of the histogram and we need to escape it. We do that by using the 1-bit routing table (made during the preprocessing):
+    <ul>
+      <li>If \( \ell(v) \) is higher → go to \( \ell(v) \)</li>
+      <li>Else → go to r(s)</li>
+    </ul>
+
+    This guarantees that we climb towards the top of the histogram (and escape the pocket we were in).
+
+    <h4>Case 3: Target t is inside the interval I(s) but not directly visible</h4>
+    This is the most interesting case.
+
+    In this case, two special neighbors are computed:
+    <ul>
+      <li><strong>Near dominator nd(s, t):</strong> the rightmost neighbor of s with x ≤ x(t)</li>
+      <li><strong>Far dominator fd(s, t):</strong>the leftmost neighbor of s with x ≥ x(t)</li>
+    </ul>
+
+    These two special neighbors form an interval around the target. 
+
+    The algorithm used the breakpoint of nd(s, t):
+
+
+
 
   </div>
 
