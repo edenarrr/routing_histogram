@@ -361,7 +361,7 @@ function computeBreakpointsAndLabels() {
     }
 
     const topBaseLeft = vertices[0];
-    const topBaseRight = vertices[1];
+    const topBaseRight = vertices[15];
 
     for (const v of vertices) {
         let isLeftBase = (v.id === topBaseLeft.id);
