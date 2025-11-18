@@ -335,48 +335,46 @@ function classifyVerticesAndEdges() {
 // Visibility Graph, bounds ℓ(v), r(v) 
 
 function computeNeighborsAndBounds() {
-    const n = vertices.length;
+  const n = vertices.length;
 
-    for (const v of vertices) {
-        v.neighbors = [];
+  for (const v of vertices) {
+    v.neighbors = [];
+  }
+
+  // r-visibility neighbors
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const vi = vertices[i];
+      const vj = vertices[j];
+      if (isRectilinearVisible(vi, vj)) {
+        vi.addNeighbor(vj);
+        vj.addNeighbor(vi);
+      }
+    }
+  }
+
+  // ℓ(v) = leftmost visible neighbor,  r(v) = rightmost visible neighbor (by x)
+  for (const v of vertices) {
+    if (v.neighbors.length === 0) continue;
+
+    let l_v = v.neighbors[0];
+    let r_v = v.neighbors[0];
+
+    for (const n of v.neighbors) {
+      if (n.x < l_v.x) l_v = n;
+      if (n.x > r_v.x) r_v = n;
     }
 
-    // Compute r-visibility neighbors
-    for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-            const vi = vertices[i];
-            const vj = vertices[j];
-            if (isRectilinearVisible(vi, vj)) {
-                vi.addNeighbor(vj);
-                vj.addNeighbor(vi);
-            }
-        }
-    }
+    v.l_v = l_v;
+    v.r_v = r_v;
 
-    // Compute ℓ(v), r(v) and routingTable bit
-    for (const v of vertices) {
-        if (v.neighbors.length === 0) continue;
-
-        // Include v itself in neighborhood for theoretical niceness, but we won't use it as a neighbor for routing.
-        const neighborIds = v.neighbors.map(n => n.id);
-        let l_v = v.neighbors[0];
-        let r_v = v.neighbors[0];
-
-        for (const n of v.neighbors) {
-            if (n.id < l_v.id) l_v = n;
-            if (n.id > r_v.id) r_v = n;
-        }
-
-        v.l_v = l_v; // ℓ(v)
-        v.r_v = r_v; // r(v)
-
-        // Single-bit routing table: true if left visible neighbor is higher than right
-        // Remember: smaller y means higher (top base is smallest y)
-        v.routingTable = {
-            higher_is_l: (l_v.y < r_v.y)
-        };
-    }
+    // Single-bit routing table: true if left visible neighbor is higher than right
+    v.routingTable = {
+      higher_is_l: (l_v.y < r_v.y)   // smaller y = higher
+    };
+  }
 }
+
 
 // Breakpoints and labels
 
@@ -517,14 +515,11 @@ function route() {
     if (s.isNeighbor(t)) {
         nextVertex = t;
     } else {
-        // Check if t is in the interval I(s) = [ℓ(s), r(s)] (by indices).
-        const lId = s.l_v.id;
-        const rId = s.r_v.id;
-        const tid = t.id;
-
-        // For this fixed histogram, indices are along the x-monotone boundary, so we
-        // can safely use simple [lId, rId] without wrap-around.
-        const tInIs = (tid >= lId && tid <= rId);
+        // Check if t is in the interval I(s) = [ℓ(s), r(s)] (by x-coordinates).
+        const minX = Math.min(s.l_v.x, s.r_v.x);
+        const maxX = Math.max(s.l_v.x, s.r_v.x);
+        const eps  = 1e-6;
+        const tInIs = (t.x >= minX - eps && t.x <= maxX + eps);
 
         if (!tInIs) {
             // Case 2: t ∉ I(s). Escape pocket using routing table bit.
@@ -557,10 +552,19 @@ function route() {
                         nextVertex = fd;
                     }
                 } else {
-                    // if no breakpoint is available, fall back to distance-based choice between nd and fd
-                    const dNd = dist(nd.x, nd.y, t.x, t.y);
-                    const dFd = dist(fd.x, fd.y, t.x, t.y);
-                    nextVertex = (dNd <= dFd) ? nd : fd;
+                    // No breakpoint available: decide using horizontal proximity to the target.
+                    const dxNd = Math.abs(nd.x - t.x);
+                    const dxFd = Math.abs(fd.x - t.x);
+                    const eps  = 1e-6;
+
+                    if (dxNd < dxFd - eps) {
+                        nextVertex = nd;
+                    } else if (dxFd < dxNd - eps) {
+                        nextVertex = fd;
+                    } else {
+                        // Tie-break: prefer the higher one (smaller y)
+                        nextVertex = (nd.y < fd.y) ? nd : fd;
+                    }
                 }
             }
         }
