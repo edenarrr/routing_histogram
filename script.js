@@ -287,34 +287,49 @@ function classifyVerticesAndEdges() {
     const n = vertices.length;
     edges = [];
 
-    // 1) Left/right classification and corresponding vertex cv(v)
+    // --- 0) Determine polygon orientation (CW vs CCW) ---
+    let area2 = 0;
     for (let i = 0; i < n; i++) {
-        const v = vertices[i];
-        const next = vertices[(i + 1) % n];
-        const prev = vertices[(i - 1 + n) % n];
+        const a = vertices[i];
+        const b = vertices[(i + 1) % n];
+        area2 += a.x * b.y - b.x * a.y;
+    }
+    const isCCW = area2 > 0;   // your polygon is CW, so isCCW will be false
 
-        if (v.y === next.y) {
-            // v -- next is a horizontal edge, v is left, next is right
-            v.isLeftVertex  = true;
-            next.isRightVertex = true;
-            v.cv   = next;
-            next.cv = v;
+    // --- 1) Reset flags ---
+    for (const v of vertices) {
+        v.cv = null;
+        v.isLeftVertex  = false;
+        v.isRightVertex = false;
+    }
 
-            edges.push({ left: v, right: next, y: v.y });
-        } else if (prev.y === v.y) {
-            // prev -- v is a horizontal edge, prev is left, v is right
-            prev.isLeftVertex = true;
-            v.isRightVertex   = true;
-            v.cv   = prev;
-            prev.cv = v;
-            // edge already added when processing prev
+    // --- 2) Build horizontal edges and set left/right endpoints by x-coordinate ---
+    for (let i = 0; i < n; i++) {
+        const a = vertices[i];
+        const b = vertices[(i + 1) % n];
+
+        if (a.y === b.y) {              // horizontal edge
+            let left = a;
+            let right = b;
+            if (b.x < a.x) {            // swap if needed
+                left = b;
+                right = a;
+            }
+
+            left.isLeftVertex  = true;
+            right.isRightVertex = true;
+
+            left.cv  = right;
+            right.cv = left;
+
+            edges.push({ left, right, y: left.y });
         }
     }
 
-    // 2) Convex vs. reflex (using cross product, polygon is CCW)
+    // --- 3) Convex vs reflex using orientation-aware cross product ---
     for (let i = 0; i < n; i++) {
         const prev = vertices[(i - 1 + n) % n];
-        const v = vertices[i];
+        const v    = vertices[i];
         const next = vertices[(i + 1) % n];
 
         const ax = v.x - prev.x;
@@ -323,14 +338,22 @@ function classifyVerticesAndEdges() {
         const by = next.y - v.y;
         const cross = ax * by - ay * bx;
 
-        v.isReflex = (cross < 0);
-        v.isConvex = (cross > 0);
+        // For CCW polygon: reflex <=> cross < 0
+        // For CW polygon:  reflex <=> cross > 0
+        if (isCCW) {
+            v.isReflex = (cross < 0);
+            v.isConvex = (cross > 0);
+        } else {
+            v.isReflex = (cross > 0);
+            v.isConvex = (cross < 0);
+        }
 
-        let lr = v.isLeftVertex ? 'l' : (v.isRightVertex ? 'r' : '?');
-        let ang = v.isReflex ? 'reflex' : (v.isConvex ? 'convex' : 'flat');
-        v.type = `${lr}-${ang}`;
+        const lr  = v.isLeftVertex ? "l" : (v.isRightVertex ? "r" : "?");
+        const ang = v.isReflex ? "reflex" : (v.isConvex ? "convex" : "flat");
+        v.type = `${lr}-${ang}`;   // e.g., "l-reflex", "r-convex"
     }
 }
+
 
 // Visibility Graph, bounds ℓ(v), r(v) 
 
@@ -403,51 +426,39 @@ function computeBreakpointsAndLabels() {
         let chosenBreakpoint = null;
 
         if (needsRightSearch) {
-            // look for left endpoints to the right and below
-            let bestEdge = null;
-            for (const e of edges) {
-                if (e.left.x <= v.x) continue;    // must be to the right
-                if (e.y <= v.y) continue;         // must be below (larger y on screen)
-                if (!isRectilinearVisible(v, e.left)) continue;
+    // r-reflex or left base: search to the right (or aligned) and below
+    let bestEdge = null;
+    for (const e of edges) {
+        if (e.left.x < v.x) continue;     // strictly left -> skip
+        if (e.y <= v.y) continue;         // must be below (larger y on screen)
+        if (!isRectilinearVisible(v, e.left)) continue;
 
-                if (!bestEdge) {
-                    bestEdge = e;
-                } else {
-                    // choose the one closest below v: minimal (e.y - v.y)
-                    const curDelta = e.y - v.y;
-                    const bestDelta = bestEdge.y - v.y;
-                    if (curDelta < bestDelta - 1e-6) {
-                        bestEdge = e;
-                    }
-                }
-            }
-            if (bestEdge) {
-                chosenBreakpoint = bestEdge.left;
-            }
+        if (!bestEdge || (e.y - v.y) < (bestEdge.y - v.y)) {
+            bestEdge = e;                 // closest below v
         }
+    }
+    if (bestEdge) {
+        chosenBreakpoint = bestEdge.left;
+    }
+}
 
-        if (needsLeftSearch && !chosenBreakpoint) {
-            // look for right endpoints to the left and below
-            let bestEdge = null;
-            for (const e of edges) {
-                if (e.right.x >= v.x) continue; // must be to the left
-                if (e.y <= v.y) continue; // must be below
-                if (!isRectilinearVisible(v, e.right)) continue;
+if (needsLeftSearch && !chosenBreakpoint) {
+    // l-reflex or right base: search to the left (or aligned) and below
+    let bestEdge = null;
+    for (const e of edges) {
+        if (e.right.x > v.x) continue;    // strictly right -> skip
+        if (e.y <= v.y) continue;         // must be below
+        if (!isRectilinearVisible(v, e.right)) continue;
 
-                if (!bestEdge) {
-                    bestEdge = e;
-                } else {
-                    const curDelta = e.y - v.y;
-                    const bestDelta = bestEdge.y - v.y;
-                    if (curDelta < bestDelta - 1e-6) {
-                        bestEdge = e;
-                    }
-                }
-            }
-            if (bestEdge) {
-                chosenBreakpoint = bestEdge.right;
-            }
+        if (!bestEdge || (e.y - v.y) < (bestEdge.y - v.y)) {
+            bestEdge = e;
         }
+    }
+    if (bestEdge) {
+        chosenBreakpoint = bestEdge.right;
+    }
+}
+
 
         if (chosenBreakpoint) {
             v.breakpoint = chosenBreakpoint;
