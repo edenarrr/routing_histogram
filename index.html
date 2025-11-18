@@ -121,9 +121,13 @@
       <li><strong>Far dominator fd(s, t):</strong>the leftmost neighbor of s with x ≥ x(t)</li>
     </ul>
 
-    These two special neighbors form an interval around the target. 
+    The shortest path from s to t must go through either <strong>nd(s, t)</strong> or <strong>fd(s, t)</strong>. 
 
-    The algorithm used the breakpoint of nd(s, t):
+    To decide the next hop, we look at nd(s, t) and its breakpoint. The breakpoint b is already computed in the preprocessing since nd(s, t) is a reflex vertex. With the help of the breakpoint b, two "regions" are created:
+    <ul>
+      <li><strong>[nd(s, t), b]: </strong>If t lies in that interval, we choose nd(s, t) as the next hop.</li>
+      <li><strong>[cv(b), fd(s, t)]: </strong>If t lies in that interval, we choose fd(s, t) as the next hop.</li>
+    </ul>
 
 
 

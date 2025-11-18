@@ -329,8 +329,8 @@ function classifyVerticesAndEdges() {
         const by = next.y - v.y;
         const cross = ax * by - ay * bx;
 
-        v.isReflex = (cross < 0);
-        v.isConvex = (cross > 0);
+        v.isReflex = (cross > 0);
+        v.isConvex = (cross < 0);
 
         const lr  = v.isLeftVertex ? "l" : (v.isRightVertex ? "r" : "?");
         const ang = v.isReflex ? "reflex" : (v.isConvex ? "convex" : "flat");
@@ -540,28 +540,27 @@ function route() {
                 // Use breakpoint of nd(s, t) to decide side of I(s, t)
                 const b = nd.breakpoint;
                 if (b && b.cv) {
-                    // midpoint between b and cv(b) splits I(s, t) into two sub-intervals
-                    const midX = (b.x + b.cv.x) / 2;
-                    if (t.x <= midX) {
+                    if (t.x >= nd.x && t.x <= b.x) {
                         nextVertex = nd;
-                    } else {
+                    } else if (t.x >= b.cv.x && t.x <= fd.x){
                         nextVertex = fd;
                     }
-                } else {
-                    // No breakpoint available: decide using horizontal proximity to the target.
-                    const dxNd = Math.abs(nd.x - t.x);
-                    const dxFd = Math.abs(fd.x - t.x);
-                    const eps  = 1e-6;
+                } 
+                // else { Safety block, if preprocessing is correct and lemmas too, no need for this
+                //     // No breakpoint available: decide using horizontal proximity to the target.
+                //     const dxNd = Math.abs(nd.x - t.x);
+                //     const dxFd = Math.abs(fd.x - t.x);
+                //     const eps  = 1e-6;
 
-                    if (dxNd < dxFd - eps) {
-                        nextVertex = nd;
-                    } else if (dxFd < dxNd - eps) {
-                        nextVertex = fd;
-                    } else {
-                        // Tie-break: prefer the higher one (smaller y)
-                        nextVertex = (nd.y < fd.y) ? nd : fd;
-                    }
-                }
+                //     if (dxNd < dxFd - eps) {
+                //         nextVertex = nd;
+                //     } else if (dxFd < dxNd - eps) {
+                //         nextVertex = fd;
+                //     } else {
+                //         // Tie-break: prefer the higher one (smaller y)
+                //         nextVertex = (nd.y < fd.y) ? nd : fd;
+                //     }
+                // }
             }
         }
     }
