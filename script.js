@@ -287,15 +287,6 @@ function classifyVerticesAndEdges() {
     const n = vertices.length;
     edges = [];
 
-    // --- 0) Determine polygon orientation (CW vs CCW) ---
-    let area2 = 0;
-    for (let i = 0; i < n; i++) {
-        const a = vertices[i];
-        const b = vertices[(i + 1) % n];
-        area2 += a.x * b.y - b.x * a.y;
-    }
-    const isCCW = area2 > 0;   // your polygon is CW, so isCCW will be false
-
     // --- 1) Reset flags ---
     for (const v of vertices) {
         v.cv = null;
@@ -326,7 +317,7 @@ function classifyVerticesAndEdges() {
         }
     }
 
-    // --- 3) Convex vs reflex using orientation-aware cross product ---
+    // --- 3) Convex vs reflex using orientation cross product ---
     for (let i = 0; i < n; i++) {
         const prev = vertices[(i - 1 + n) % n];
         const v    = vertices[i];
@@ -338,15 +329,8 @@ function classifyVerticesAndEdges() {
         const by = next.y - v.y;
         const cross = ax * by - ay * bx;
 
-        // For CCW polygon: reflex <=> cross < 0
-        // For CW polygon:  reflex <=> cross > 0
-        if (isCCW) {
-            v.isReflex = (cross < 0);
-            v.isConvex = (cross > 0);
-        } else {
-            v.isReflex = (cross > 0);
-            v.isConvex = (cross < 0);
-        }
+        v.isReflex = (cross < 0);
+        v.isConvex = (cross > 0);
 
         const lr  = v.isLeftVertex ? "l" : (v.isRightVertex ? "r" : "?");
         const ang = v.isReflex ? "reflex" : (v.isConvex ? "convex" : "flat");
