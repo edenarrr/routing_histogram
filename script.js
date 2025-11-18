@@ -360,7 +360,8 @@ function computeNeighborsAndBounds() {
     }
   }
 
-  // ℓ(v) = leftmost visible neighbor,  r(v) = rightmost visible neighbor (by x)
+  // ℓ(v) = argmin{wid | w ∈ N(v)} : leftmost visible neighbor
+  // r(v) = argmax{wid | w ∈ N(v)} : rightmost visible neighbor
   for (const v of vertices) {
     if (v.neighbors.length === 0) continue;
 
@@ -368,8 +369,8 @@ function computeNeighborsAndBounds() {
     let r_v = v.neighbors[0];
 
     for (const n of v.neighbors) {
-      if (n.x < l_v.x) l_v = n;
-      if (n.x > r_v.x) r_v = n;
+        if (n.id < l_v.id) l_v = n;
+        if (n.id > r_v.id) r_v = n;
     }
 
     v.l_v = l_v;
@@ -511,10 +512,10 @@ function route() {
         nextVertex = t;
     } else {
         // Check if t is in the interval I(s) = [ℓ(s), r(s)] (by x-coordinates).
-        const minX = Math.min(s.l_v.x, s.r_v.x);
-        const maxX = Math.max(s.l_v.x, s.r_v.x);
+        const minId = Math.min(s.l_v.id, s.r_v.id);
+        const maxId = Math.max(s.l_v.id, s.r_v.id);
+        const tInIs = (t.id >= minId && t.id <= maxId);
         const eps  = 1e-6;
-        const tInIs = (t.x >= minX - eps && t.x <= maxX + eps);
 
         if (!tInIs) {
             // Case 2: t ∉ I(s). Escape pocket using routing table bit.
