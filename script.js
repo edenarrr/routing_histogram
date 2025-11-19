@@ -158,18 +158,39 @@ function setup() {
     const canvas = createCanvas(800, 600);
     canvas.parent('canvas-container');
 
-    let resetButton = createButton('Reset Simulation');
+    // Container for the buttons, placed under the canvas
+    const controls = createDiv();
+    controls.parent('canvas-container');
+    controls.style('margin-top', '10px');
+    controls.style('display', 'flex');
+    controls.style('gap', '10px');
+    controls.style('justify-content', 'center');
 
-    resetButton.parent('canvas-container');
-    resetButton.style('position', 'absolute');
-    resetButton.style('left', '350px');  
-    resetButton.style('top',  '550px'); 
-
+    // Reset button
+    let resetButton = createButton('Reset simulation');
+    resetButton.parent(controls);
     resetButton.mousePressed(resetSketch);
+
+    // Previous histogram button
+    let prevButton = createButton('Previous histogram');
+    prevButton.parent(controls);
+    prevButton.mousePressed(() => switchHistogram(-1));
+
+    // Next histogram button
+    let nextButton = createButton('Next histogram');
+    nextButton.parent(controls);
+    nextButton.mousePressed(() => switchHistogram(+1));
 
     resetSketch();
 }
 
+
+function switchHistogram(delta) {
+    // Move to previous (-1) or next (+1) histogram, with wrap-around.
+    currentHistogramIndex = (currentHistogramIndex + delta + HISTOGRAMS.length) % HISTOGRAMS.length;
+
+    resetSketch();
+}
 
 function draw() {
     background(240);
