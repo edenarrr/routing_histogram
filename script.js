@@ -35,6 +35,113 @@ class Vertex {
     }
 }
 
+
+// --- Histogram class ---
+class Histogram {
+    constructor(name, vertices) {
+        this.name = name;
+        this.vertices = vertices;
+    }
+
+    buildVertices() {
+        return this.vertices;
+    }
+}
+
+// --- Predefined histograms ---
+const HISTOGRAMS = [
+    new Histogram("Histogram 1", [
+        new Vertex( 50,  50, 0),
+        new Vertex( 50, 550, 1),
+        new Vertex(150, 550, 2),
+        new Vertex(150, 200, 3),
+        new Vertex(250, 200, 4),
+        new Vertex(250, 350, 5),
+        new Vertex(350, 350, 6),
+        new Vertex(350, 150, 7),
+        new Vertex(450, 150, 8),
+        new Vertex(450, 450, 9),
+        new Vertex(550, 450,10),
+        new Vertex(550, 250,11),
+        new Vertex(650, 250,12),
+        new Vertex(650, 550,13),
+        new Vertex(750, 550,14),
+        new Vertex(750,  50,15)
+    ]),
+
+    new Histogram("Histogram 2", [
+        new Vertex( 50,  50, 0),
+        new Vertex( 50, 550, 1),
+
+        new Vertex(200, 550, 2),
+        new Vertex(200, 300, 3),
+        new Vertex(280, 300, 4),
+        new Vertex(280, 450, 5),
+
+        new Vertex(380, 450, 6),
+        new Vertex(380, 250, 7),
+        new Vertex(500, 250, 8),
+        new Vertex(500, 500, 9),
+
+        new Vertex(620, 500,10),
+        new Vertex(620, 350,11),
+        new Vertex(700, 350,12),
+        new Vertex(700, 550,13),
+
+        new Vertex(750, 550,14),
+        new Vertex(750,  50,15)
+    ]),
+
+    new Histogram("Histogram 3", [
+        new Vertex( 50,  50, 0),
+        new Vertex( 50, 500, 1),
+
+        new Vertex(120, 500, 2),
+        new Vertex(120, 300, 3),
+        new Vertex(200, 300, 4),
+        new Vertex(200, 550, 5),
+
+        new Vertex(280, 550, 6),
+        new Vertex(280, 200, 7),
+        new Vertex(360, 200, 8),
+        new Vertex(360, 450, 9),
+
+        new Vertex(440, 450,10),
+        new Vertex(440, 250,11),
+        new Vertex(560, 250,12),
+        new Vertex(560, 550,13),
+
+        new Vertex(750, 550,14),
+        new Vertex(750,  50,15)
+    ]),
+
+    new Histogram("Histogram 4", [
+        new Vertex( 50,  50, 0),
+        new Vertex( 50, 550, 1),
+
+        new Vertex(180, 550, 2),
+        new Vertex(180, 400, 3),
+        new Vertex(260, 400, 4),
+        new Vertex(260, 550, 5),
+
+        new Vertex(420, 550, 6),
+        new Vertex(420, 250, 7),
+        new Vertex(480, 250, 8),
+        new Vertex(480, 450, 9),
+
+        new Vertex(600, 450,10),
+        new Vertex(600, 350,11),
+        new Vertex(680, 350,12),
+        new Vertex(680, 550,13),
+
+        new Vertex(750, 550,14),
+        new Vertex(750,  50,15)
+    ])
+];
+
+// Pick a random histogram index in [0, HISTOGRAMS.length - 1]
+let currentHistogramIndex = Math.floor(Math.random() * HISTOGRAMS.length);
+
 // --- Global Variables ---
 
 let vertices = [];
@@ -170,25 +277,9 @@ function resetSketch() {
     path = [];
     vis.message = "Select a start vertex (green).";
 
-    // Fixed histogram polygon (counterclockwise from left base vertex 0)
-    vertices = [
-        new Vertex( 50, 50, 0),   // top-left base
-        new Vertex( 50, 550, 1),
-        new Vertex(150, 550, 2),
-        new Vertex(150, 200, 3),
-        new Vertex(250, 200, 4),
-        new Vertex(250, 350, 5),
-        new Vertex(350, 350, 6),
-        new Vertex(350, 150, 7),
-        new Vertex(450, 150, 8),
-        new Vertex(450, 450, 9),
-        new Vertex(550, 450,10),
-        new Vertex(550, 250,11),
-        new Vertex(650, 250,12),
-        new Vertex(650, 550,13),
-        new Vertex(750, 550,14),
-        new Vertex(750, 50,15)    // top-right base
-    ];
+    // Build vertices from the currently selected histogram
+    const histogram = HISTOGRAMS[currentHistogramIndex];
+    vertices = histogram.buildVertices();
 
 
     preprocessVertices();
@@ -397,8 +488,8 @@ function computeBreakpointsAndLabels() {
         v.label.brId = null;
     }
 
-    const topBaseLeft = vertices[0];
-    const topBaseRight = vertices[15];
+    const topBaseLeft  = vertices[0];
+    const topBaseRight = vertices[vertices.length - 1];
 
     for (const v of vertices) {
         let isLeftBase = (v.id === topBaseLeft.id);
@@ -511,7 +602,7 @@ function route() {
     if (s.isNeighbor(t)) {
         nextVertex = t;
     } else {
-        // Check if t is in the interval I(s) = [ℓ(s), r(s)] (by x-coordinates).
+        // Check if t is in the interval I(s) = [ℓ(s), r(s)].
         const minId = Math.min(s.l_v.id, s.r_v.id);
         const maxId = Math.max(s.l_v.id, s.r_v.id);
         const tInIs = (t.id >= minId && t.id <= maxId);
