@@ -46,7 +46,7 @@
 <h2>3. The Routing Scheme Components</h2>
 <p>The routing scheme equips each vertex with minimal information to make smart, local decisions.</p>
 <ul>
-  <li><strong>Label lab(v):</strong> This is the unique address of a vertex v. It contains the vertex's index (vid) and, for reflex vertices, the index of a special landmark called its "breakpoint" (br(v)). The label format is (vid, br(v)id).</li>
+  <li><strong>Label lab(v):</strong> This is the unique address of a vertex v. It contains the vertex's index (vid) and, for reflex vertices and base vertices, the index of a special landmark called its "breakpoint" (br(v)). The label format is (vid, br(v)id) for reflex/base vertices.</li>
   <li><strong>Routing Table p(v):</strong> A tiny piece of stored data represented by a single bit indicating whether the left visible neighbor \( \ell(v) \) is higher or lower than the right visible neighbor r(v).</li>
   <li><strong>Link Table:</strong> At any given vertex, this is simply a list of the labels of all its directly connected neighbors (N(v)). The algorithm uses this table to identify its neighbors and check if the target is among them.</li>
   <li><strong>Stretch Factor:</strong> A measure of path quality. It's the ratio of the routing path's length to the true shortest path's length. This scheme achieves a stretch factor of 1, meaning it always finds the absolute shortest path.</li>
@@ -60,7 +60,7 @@
   <li><strong>Interval I(s):</strong> The set of all vertices located horizontally between \( \ell(s) \) and r(s), defined as [\( \ell(s) \), r(s)]. A key first step in routing is to check if the target t is within the current interval I(s).</li>
   <li><strong>Near/Far Dominators nd(s, t) and fd(s, t):</strong> These are crucial when the target t is inside the current interval I(s) but not directly visible. The <strong>near dominator nd(s, t)</strong> is the rightmost neighbor of s that is to the left of t. The <strong>far dominator fd(s, t)</strong> is the leftmost neighbor of s that is to the right of t. These two vertices effectively "gate" the region containing the target.</li>
   <li><strong>Interval between Dominators I(s, t):</strong> This is a more specific interval, defined as [nd(s, t), fd(s, t)]. It contains all vertices that lie horizontally between the near and far dominators. When t is in I(s), the algorithm's next goal is to figure out how to get into this sub-interval.</li>
-  <li><strong>Breakpoint br(v):</strong> This applies to reflex vertices and is a key part of the vertex label. For an r-reflex vertex v, its breakpoint br(v) is the highest visible vertex to its right that is below it. This landmark essentially acts as an "escape route" from the pocket created by the reflex vertex.</li>
+  <li><strong>Breakpoint br(v):</strong> This applies to reflex and base vertices and is a key part of the vertex label. For an r-reflex vertex or a left base vertex v, its breakpoint br(v) is the highest visible vertex to its right that is below it. Analogous definitions apply to l-reflex vertices and the right base vertex. This landmark essentially acts as an "escape route" from the pocket created by the reflex vertex.</li>
 </ul>
 </header>
     </header>
