@@ -10,9 +10,13 @@ body {
 
 /* The main container that centers the content */
 .content-wrapper {
-  max-width: 900px; /* Sets the maximum width of your content area */
-  margin: 0 auto;   /* This is the key to centering the block */
-  text-align: left;  /* Resets text alignment for the text inside */
+  max-width: 100%; /* allow it to be as wide as needed */
+  margin: 0 auto;
+  text-align: left;
+
+  display: flex; /* center children (the canvas container) */
+  flex-direction: column;
+  align-items: center; /* <--- horizontally center #canvas-container */
 }
 
 /* Header section for the title and paragraph */
@@ -37,7 +41,7 @@ body {
 /* p5.js canvas */
 #canvas-container {
   position: relative;
-  width: 800px;
+  width: 1100px;
   /* height: 600px; */
 
   /* Add a subtle shadow to lift the app off the page */

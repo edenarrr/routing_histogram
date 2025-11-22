@@ -142,6 +142,30 @@ const HISTOGRAMS = [
 // Pick a random histogram index in [0, HISTOGRAMS.length - 1]
 let currentHistogramIndex = Math.floor(Math.random() * HISTOGRAMS.length);
 
+// --- Layout Constants ---
+const LOGICAL_WIDTH  = 800;
+const LOGICAL_HEIGHT = 600;
+
+const PANEL_WIDTH  = 500;  // width of each box on screen
+const PANEL_HEIGHT = 450;  // height of each box on screen
+const PANEL_GAP    = 100;   // horizontal space between boxes
+
+// Inner margins inside each box (space between box border and histogram/graph)
+const INNER_MARGIN_X = 20;
+const INNER_MARGIN_Y = 20;
+
+const SCALE_X = (PANEL_WIDTH  - 2 * INNER_MARGIN_X) / LOGICAL_WIDTH;
+const SCALE_Y = (PANEL_HEIGHT - 2 * INNER_MARGIN_Y) / LOGICAL_HEIGHT;
+
+const CANVAS_WIDTH  = PANEL_WIDTH * 2 + PANEL_GAP;
+const CANVAS_HEIGHT = PANEL_HEIGHT;
+
+// Functions to map vertex coords to screen coords
+function sxLeft(x)  { return INNER_MARGIN_X + x * SCALE_X; }
+function sxRight(x) { return PANEL_WIDTH + PANEL_GAP + INNER_MARGIN_X + x * SCALE_X; }
+function sy(y)      { return INNER_MARGIN_Y + y * SCALE_Y; }
+
+
 // --- Global Variables ---
 
 let vertices = [];
@@ -155,7 +179,7 @@ let routingInterval = null;
 let vis = { message: "Select a start vertex (green)." };
 
 function setup() {
-    const canvas = createCanvas(800, 600);
+    const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
     canvas.parent('canvas-container');
 
     // Container for the buttons, placed under the canvas
@@ -198,14 +222,23 @@ function draw() {
     drawHistogram();
     drawPath();
     drawVertices();
+    drawRVisibilityGraph();
     drawInstructions();
 }
 
 function mousePressed() {
     if (routingInterval) return; // disable clicks during routing computation
 
+    // Only react to clicks inside the left panel (area of the histogram)
+    if (mouseX < 0 || mouseX > PANEL_WIDTH || mouseY < 0 || mouseY > PANEL_HEIGHT) {
+        return;
+    }
+
     for (const v of vertices) {
-        if (dist(mouseX, mouseY, v.x, v.y) < 12) {
+        const vx = sxLeft(v.x);
+        const vy = sy(v.y);
+        
+        if (dist(mouseX, mouseY, vx, vy) < 12) {
             if (!startVertex) {
                 startVertex = v;
                 currentVertex = v;
@@ -222,25 +255,47 @@ function mousePressed() {
     }
 }
 
-// Drawing and ui
-
 function drawGrid() {
     stroke(220);
-    for (let x = 0; x < width; x += 20) line(x, 0, x, height);
-    for (let y = 0; y < height; y += 20) line(0, y, width, y);
+    strokeWeight(1);
+
+    const stepX = 20 * SCALE_X;
+    const stepY = 20 * SCALE_Y;
+
+    for (let x = 0; x <= CANVAS_WIDTH; x += stepX) {
+        line(x, 0, x, CANVAS_HEIGHT);
+    }
+    for (let y = 0; y <= CANVAS_HEIGHT; y += stepY) {
+        line(0, y, CANVAS_WIDTH, y);
+    }
+
+    stroke(0);
+    strokeWeight(2);
+    noFill();
+    rect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+    rect(PANEL_WIDTH + PANEL_GAP, 0, PANEL_WIDTH, PANEL_HEIGHT);
 }
 
 function drawHistogram() {
+    if (!vertices || vertices.length === 0) return;
+
     stroke(0);
-    strokeWeight(3);
+    strokeWeight(4);
     noFill();
     beginShape();
-    for (const v of vertices) vertex(v.x, v.y);
+    for (const v of vertices) vertex(sxLeft(v.x), sy(v.y));
     endShape(CLOSE);
 }
 
 function drawVertices() {
+    textSize(12);
+    textAlign(LEFT, BOTTOM);
+
     for (const v of vertices) {
+        const x = sxLeft(v.x);
+        const y = sy(v.y);
+
+        // Colors for  vertices
         if (startVertex && v.id === startVertex.id) fill(0, 255, 0);
         else if (targetVertex && v.id === targetVertex.id) fill(255, 0, 0);
         else fill(255);
@@ -252,39 +307,68 @@ function drawVertices() {
             strokeWeight(1);
             stroke(0);
         }
-        ellipse(v.x, v.y, 14, 14);
-    }
+        ellipse(x, y, 14, 14);
 
-    // Draw labels (id and possibly br-id)
-    noStroke();
-    fill(0);
-    textSize(12);
-    for (const v of vertices) {
-        let labelText = `${v.id}`;
-        if (v.label && v.label.brId !== null) {
-            labelText += `, br:${v.label.brId}`;
+        // Draw labels (id and possibly br-id)
+        noStroke();
+        fill(0);
+        textSize(12);
+        if (v.breakpoint) {
+            text(`${v.id}, br:${v.breakpoint.id}`, x + 8, y - 4);
+        } else {
+            text(`${v.id}`, x + 8, y - 4);
         }
-        text(labelText, v.x + 10, v.y - 10);
     }
 }
 
 function drawPath() {
     if (path.length > 1) {
-        stroke(0, 0, 255, 180);
-        strokeWeight(4);
+        stroke(0, 102, 204);
+        strokeWeight(3);
         noFill();
         beginShape();
-        for (const p of path) vertex(p.x, p.y);
+        for (const p of path) vertex(sxLeft(p.x), sy(p.y));
         endShape();
     }
 }
+
+function drawRVisibilityGraph() {
+    // Edges of the r-visibility graph
+    stroke(0);
+    strokeWeight(1.5);
+    for (const v of vertices) {
+        for (const n of v.neighbors) {
+            if (n.id > v.id) { // avoid drawing twice
+                line(sxRight(v.x), sy(v.y), sxRight(n.x), sy(n.y));
+            }
+        }
+    }
+
+    // Vertices
+    fill(255);
+    stroke(0);
+    strokeWeight(1.5);
+    for (const v of vertices) {
+        ellipse(sxRight(v.x), sy(v.y), 14, 14);
+    }
+
+    // Labels (ids only to keep it simple)
+    noStroke();
+    fill(0);
+    textSize(12);
+    textAlign(LEFT, BOTTOM);
+    for (const v of vertices) {
+        text(`${v.id}`, sxRight(v.x) + 8, sy(v.y) - 4);
+    }
+}
+
 
 function drawInstructions() {
     fill(0);
     noStroke();
     textSize(16);
     textAlign(LEFT, TOP);
-    text(vis.message, 10, 10);
+    text(vis.message, 20, 10);
 }
 
 // Reset and preprocessing 
