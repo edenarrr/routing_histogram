@@ -148,7 +148,11 @@ const LOGICAL_HEIGHT = 600;
 
 const PANEL_WIDTH  = 500;  // width of each box on screen
 const PANEL_HEIGHT = 450;  // height of each box on screen
-const PANEL_GAP    = 100;   // horizontal space between boxes
+const PANEL_GAP    = 80;   // horizontal space between boxes
+
+// Outer margin: space between canvas border and each box
+const OUTER_MARGIN_X = 30;
+const OUTER_MARGIN_Y = 30;
 
 // Inner margins inside each box (space between box border and histogram/graph)
 const INNER_MARGIN_X = 20;
@@ -157,13 +161,13 @@ const INNER_MARGIN_Y = 20;
 const SCALE_X = (PANEL_WIDTH  - 2 * INNER_MARGIN_X) / LOGICAL_WIDTH;
 const SCALE_Y = (PANEL_HEIGHT - 2 * INNER_MARGIN_Y) / LOGICAL_HEIGHT;
 
-const CANVAS_WIDTH  = PANEL_WIDTH * 2 + PANEL_GAP;
-const CANVAS_HEIGHT = PANEL_HEIGHT;
+const CANVAS_WIDTH  = PANEL_WIDTH * 2 + PANEL_GAP + 2 * OUTER_MARGIN_X;
+const CANVAS_HEIGHT = PANEL_HEIGHT + 2 * OUTER_MARGIN_Y;
 
 // Functions to map vertex coords to screen coords
-function sxLeft(x)  { return INNER_MARGIN_X + x * SCALE_X; }
-function sxRight(x) { return PANEL_WIDTH + PANEL_GAP + INNER_MARGIN_X + x * SCALE_X; }
-function sy(y)      { return INNER_MARGIN_Y + y * SCALE_Y; }
+function sxLeft(x)  { return OUTER_MARGIN_X + INNER_MARGIN_X + x * SCALE_X; }
+function sxRight(x) { return OUTER_MARGIN_X + PANEL_WIDTH + PANEL_GAP + INNER_MARGIN_X + x * SCALE_X; }
+function sy(y)      { return OUTER_MARGIN_Y + INNER_MARGIN_Y + y * SCALE_Y; }
 
 
 // --- Global Variables ---
@@ -230,7 +234,12 @@ function mousePressed() {
     if (routingInterval) return; // disable clicks during routing computation
 
     // Only react to clicks inside the left panel (area of the histogram)
-    if (mouseX < 0 || mouseX > PANEL_WIDTH || mouseY < 0 || mouseY > PANEL_HEIGHT) {
+    const leftX    = OUTER_MARGIN_X;
+    const rightX   = leftX + PANEL_WIDTH;
+    const topY     = OUTER_MARGIN_Y;
+    const bottomY  = topY + PANEL_HEIGHT;
+
+    if (mouseX < leftX || mouseX > rightX || mouseY < topY || mouseY > bottomY) {
         return;
     }
 
@@ -262,18 +271,37 @@ function drawGrid() {
     const stepX = 20 * SCALE_X;
     const stepY = 20 * SCALE_Y;
 
-    for (let x = 0; x <= CANVAS_WIDTH; x += stepX) {
-        line(x, 0, x, CANVAS_HEIGHT);
+    const leftX      = OUTER_MARGIN_X;
+    const leftEndX   = leftX + PANEL_WIDTH;
+    const rightX     = leftEndX + PANEL_GAP;
+    const rightEndX  = rightX + PANEL_WIDTH;
+    const topY       = OUTER_MARGIN_Y;
+    const bottomY    = topY + PANEL_HEIGHT;
+
+    // --- Vertical grid lines ---
+    // Left box
+    for (let x = leftX; x <= leftEndX; x += stepX) {
+        line(x, topY, x, bottomY);
     }
-    for (let y = 0; y <= CANVAS_HEIGHT; y += stepY) {
-        line(0, y, CANVAS_WIDTH, y);
+    // Right box
+    for (let x = rightX; x <= rightEndX; x += stepX) {
+        line(x, topY, x, bottomY);
     }
 
+    // --- Horizontal grid lines ---
+    for (let y = topY; y <= bottomY; y += stepY) {
+        // left box
+        line(leftX, y, leftEndX, y);
+        // right box
+        line(rightX, y, rightEndX, y);
+    }
+
+    // --- Box outlines ---
     stroke(0);
     strokeWeight(2);
     noFill();
-    rect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
-    rect(PANEL_WIDTH + PANEL_GAP, 0, PANEL_WIDTH, PANEL_HEIGHT);
+    rect(leftX,  topY, PANEL_WIDTH, PANEL_HEIGHT);   // left box
+    rect(rightX, topY, PANEL_WIDTH, PANEL_HEIGHT);   // right box
 }
 
 function drawHistogram() {
