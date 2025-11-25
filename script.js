@@ -1,11 +1,9 @@
-// Vertex class
 class Vertex {
     constructor(x, y, id) {
         this.x = x;
         this.y = y;
         this.id = id;
 
-        // Geometry / classification
         this.cv = null;  // corresponding vertex
         this.isLeftVertex = false;
         this.isRightVertex = false;
@@ -35,7 +33,6 @@ class Vertex {
 }
 
 
-// Histogram class
 class Histogram {
     constructor(name, vertices) {
         this.name = name;
@@ -47,10 +44,9 @@ class Histogram {
     }
 }
 
-// Predefined histograms
 const HISTOGRAMS = [
     new Histogram("Histogram 1", [
-        new Vertex( 50,  50, 0),
+        new Vertex( 50, 50, 0),
         new Vertex( 50, 550, 1),
         new Vertex(150, 550, 2),
         new Vertex(150, 200, 3),
@@ -60,17 +56,17 @@ const HISTOGRAMS = [
         new Vertex(350, 150, 7),
         new Vertex(450, 150, 8),
         new Vertex(450, 450, 9),
-        new Vertex(550, 450,10),
-        new Vertex(550, 250,11),
-        new Vertex(650, 250,12),
-        new Vertex(650, 550,13),
-        new Vertex(750, 550,14),
-        new Vertex(750,  50,15)
+        new Vertex(550, 450, 10),
+        new Vertex(550, 250, 11),
+        new Vertex(650, 250, 12),
+        new Vertex(650, 550, 13),
+        new Vertex(750, 550, 14),
+        new Vertex(750, 50, 15)
     ]),
 
     new Histogram("Histogram 2", [
-        new Vertex( 50,  50, 0),
-        new Vertex( 50, 550, 1),
+        new Vertex(50, 50, 0),
+        new Vertex(50, 550, 1),
 
         new Vertex(200, 550, 2),
         new Vertex(200, 300, 3),
@@ -82,17 +78,17 @@ const HISTOGRAMS = [
         new Vertex(500, 250, 8),
         new Vertex(500, 500, 9),
 
-        new Vertex(620, 500,10),
-        new Vertex(620, 350,11),
-        new Vertex(700, 350,12),
-        new Vertex(700, 550,13),
+        new Vertex(620, 500, 10),
+        new Vertex(620, 350, 11),
+        new Vertex(700, 350, 12),
+        new Vertex(700, 550, 13),
 
-        new Vertex(750, 550,14),
-        new Vertex(750,  50,15)
+        new Vertex(750, 550, 14),
+        new Vertex(750, 50, 15)
     ]),
 
     new Histogram("Histogram 3", [
-        new Vertex( 50,  50, 0),
+        new Vertex(50, 50, 0),
         new Vertex( 50, 500, 1),
 
         new Vertex(120, 500, 2),
@@ -105,18 +101,18 @@ const HISTOGRAMS = [
         new Vertex(360, 200, 8),
         new Vertex(360, 450, 9),
 
-        new Vertex(440, 450,10),
-        new Vertex(440, 250,11),
-        new Vertex(560, 250,12),
-        new Vertex(560, 550,13),
+        new Vertex(440, 450, 10),
+        new Vertex(440, 250, 11),
+        new Vertex(560, 250, 12),
+        new Vertex(560, 550, 13),
 
-        new Vertex(750, 550,14),
-        new Vertex(750,  50,15)
+        new Vertex(750, 550, 14),
+        new Vertex(750, 50, 15)
     ]),
 
     new Histogram("Histogram 4", [
-        new Vertex( 50,  50, 0),
-        new Vertex( 50, 550, 1),
+        new Vertex(50, 50, 0),
+        new Vertex(50, 550, 1),
 
         new Vertex(180, 550, 2),
         new Vertex(180, 400, 3),
@@ -128,13 +124,13 @@ const HISTOGRAMS = [
         new Vertex(480, 250, 8),
         new Vertex(480, 450, 9),
 
-        new Vertex(600, 450,10),
-        new Vertex(600, 350,11),
-        new Vertex(680, 350,12),
-        new Vertex(680, 550,13),
+        new Vertex(600, 450, 10),
+        new Vertex(600, 350, 11),
+        new Vertex(680, 350, 12),
+        new Vertex(680, 550, 13),
 
-        new Vertex(750, 550,14),
-        new Vertex(750,  50,15)
+        new Vertex(750, 550, 14),
+        new Vertex(750, 50, 15)
     ])
 ];
 
@@ -179,7 +175,7 @@ let currentVertex = null;
 let path = [];
 let routingInterval = null;
 
-let vis = { message: "Select a start vertex (green)." };
+let vis = {message: "Select a start vertex (green)."};
 
 function setup() {
     const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -426,7 +422,6 @@ function preprocessVertices() {
     computeBreakpointsAndLabels();
 }
 
-// Geometry helpers
 
 /**
  * Function used in isRectilinearVisible to check if a point (px, py) is in the polygon
@@ -497,8 +492,6 @@ function isRectilinearVisible(v1, v2) {
     return true;
 }
 
-// Vertex classification and edges
-
 function classifyVerticesAndEdges() {
     const n = vertices.length;
     edges = [];
@@ -551,8 +544,6 @@ function classifyVerticesAndEdges() {
 }
 
 
-// Visibility graph, bounds l(v), r(v) 
-
 function computeNeighborsAndBounds() {
   const n = vertices.length;
 
@@ -579,7 +570,7 @@ function computeNeighborsAndBounds() {
     let l_v = v.neighbors[0];
     let r_v = v.neighbors[0];
 
-    for (const n of v.neighbors) { // do it by id, because vertices are ordered anticlockwise starting at left base vertex.
+    for (const n of v.neighbors) { // do it by id, because vertices are ordered counterclockwise starting at left base vertex.
         if (n.id < l_v.id) l_v = n;
         if (n.id > r_v.id) r_v = n;
     }
@@ -594,8 +585,6 @@ function computeNeighborsAndBounds() {
   }
 }
 
-
-// Breakpoints and labels
 
 function computeBreakpointsAndLabels() {
     // Breakpoint br(v), only computed for reflex and base vertices
@@ -660,8 +649,6 @@ function computeBreakpointsAndLabels() {
     }
 }
 
-// Dominators and routing
-
 function getDominators(s, t) {
     let nd = null;
     let fd = null;
@@ -716,7 +703,6 @@ function getDominators(s, t) {
 
     return { nd, fd };
 }
-
 
 function route() {
     if (!currentVertex || !targetVertex) return;
