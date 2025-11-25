@@ -419,65 +419,20 @@ function preprocessVertices() {
     computeBreakpointsAndLabels();
 }
 
-function isPointInPolygon(px, py) {
-    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-        const p1 = vertices[i], p2 = vertices[j];
-        const onSegment = (px >= Math.min(p1.x, p2.x) && px <= Math.max(p1.x, p2.x) && py >= Math.min(p1.y, p2.y) && py <= Math.max(p1.y, p2.y) &&
-        (p1.x - p2.x) * (py - p1.y) - (p1.y - p2.y) * (px - p1.x) == 0);
-        if (onSegment) {
-            return true;
-        }
-    }
-    let inside = false;
-    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-        const vi = vertices[i], vj = vertices[j];
-        const intersect = ((vi.y > py) !== (vj.y > py)) && (px < (vj.x - vi.x) * (py - vi.y) / (vj.y - vi.y) + vi.x);
-        if (intersect)
-            inside = !inside;
-    }
-    return inside;
-}
-
 function isRectilinearVisible(v1, v2) {
     if (v1.id === v2.id) return false;
-
     const minX = Math.min(v1.x, v2.x);
     const maxX = Math.max(v1.x, v2.x);
-    const minY = Math.min(v1.y, v2.y);
     const maxY = Math.max(v1.y, v2.y);
+    let topY = vertices[0].y;
+    for (const e of edges) {
+        if (e.y === topY) continue; // skip base edge
 
-    const width = maxX - minX;
-    const height = maxY - minY;
-
-    // Horizontal or vertical segment
-    if (width == 0 || height == 0) {
-        // Sample along the segment
-        const steps = 10;
-        for (let i = 0; i <= steps; i++) {
-            const t = i / steps;
-            const px = v1.x + t * (v2.x - v1.x);
-            const py = v1.y + t * (v2.y - v1.y);
-            if (!isPointInPolygon(px, py)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Normal rectangles
-    const samplesX = 10;
-    const samplesY = 6;
-
-    for (let ix = 1; ix <= samplesX; ix++) {
-        const px = minX + (ix / (samplesX + 1)) * width; // strictly inside in x
-        for (let iy = 1; iy <= samplesY; iy++) {
-            const py = minY + (iy / (samplesY + 1)) * height; // strictly inside in y
-            if (!isPointInPolygon(px, py)) {
-                return false;
-            }
+        // if the edge overlaps the x interval of the rectangle and is above the rectangle (y), so the rectangle has a part thats outside the histogram
+        if ((e.right.x> minX) && (e.left.x < maxX) &&e.y < maxY) {
+            return false;
         }
     }
-
     return true;
 }
 
