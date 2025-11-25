@@ -427,7 +427,7 @@ function preprocessVertices() {
     computeBreakpointsAndLabels();
 }
 
-// --- Geometry Helpers ---
+// Geometry helpers
 
 function isPointInPolygon(px, py) {
     let onBoundary = false;
@@ -724,12 +724,12 @@ function route() {
     const t = targetVertex;
     let nextVertex = null;
 
-    if (!s.neighbors || s.neighbors.length === 0 || !s.l_v || !s.r_v) {
-        vis.message = "Error: current vertex has no visibility data.";
-        clearInterval(routingInterval);
-        routingInterval = null;
-        return;
-    }
+    // if (!s.neighbors || s.neighbors.length === 0 || !s.l_v || !s.r_v) {
+    //     vis.message = "Error: current vertex has no visibility data.";
+    //     clearInterval(routingInterval);
+    //     routingInterval = null;
+    //     return;
+    // }
 
     // Case 1: Target is a direct neighbor.
     if (s.isNeighbor(t)) {
@@ -739,60 +739,30 @@ function route() {
         const minId = Math.min(s.l_v.id, s.r_v.id);
         const maxId = Math.max(s.l_v.id, s.r_v.id);
         const tInIs = (t.id >= minId && t.id <= maxId);
-        const eps  = 1e-6;
 
         if (!tInIs) {
-            // Case 2: t ∉ I(s). Escape pocket using routing table bit.
+            // Case 2: t is outside the interval I(s)
             nextVertex = s.routingTable.higher_is_l ? s.l_v : s.r_v;
         } else {
-            // Case 3: t ∈ I(s) \ N(s). Use near/far dominators and breakpoint.
+            // Case 3: t is inside I(s) but not directly visible
             const { nd, fd } = getDominators(s, t);
 
-            if (!nd || !fd) {
-                // Fallback: move to neighbor closer to t.
-                let best = null;
-                let bestDist = Infinity;
-                for (const n of s.neighbors) {
-                    const d = dist(n.x, n.y, t.x, t.y);
-                    if (d < bestDist) {
-                        bestDist = d;
-                        best = n;
-                    }
+            // Use breakpoint of nd(s, t) to decide side of I(s, t)
+            const b = nd.breakpoint;
+            if (b && b.cv) {
+                if (t.x >= nd.x && t.x <= b.x) {
+                    nextVertex = nd;
+                } else if (t.x >= b.cv.x && t.x <= fd.x){
+                    nextVertex = fd;
                 }
-                nextVertex = best;
-            } else {
-                // Use breakpoint of nd(s, t) to decide side of I(s, t)
-                const b = nd.breakpoint;
-                if (b && b.cv) {
-                    if (t.x >= nd.x && t.x <= b.x) {
-                        nextVertex = nd;
-                    } else if (t.x >= b.cv.x && t.x <= fd.x){
-                        nextVertex = fd;
-                    }
-                } 
-                // else { Safety block, if preprocessing is correct and lemmas too, no need for this
-                //     // No breakpoint available: decide using horizontal proximity to the target.
-                //     const dxNd = Math.abs(nd.x - t.x);
-                //     const dxFd = Math.abs(fd.x - t.x);
-                //     const eps  = 1e-6;
-
-                //     if (dxNd < dxFd - eps) {
-                //         nextVertex = nd;
-                //     } else if (dxFd < dxNd - eps) {
-                //         nextVertex = fd;
-                //     } else {
-                //         // Tie-break: prefer the higher one (smaller y)
-                //         nextVertex = (nd.y < fd.y) ? nd : fd;
-                //     }
-                // }
             }
         }
     }
 
-    // --- State Update and Loop Detection ---
+    // State update or loop detected
     if (nextVertex) {
         if (path.some(p => p.id === nextVertex.id)) {
-            vis.message = "Error: Routing loop detected!";
+            vis.message = "Error: Loop detected!";
             clearInterval(routingInterval);
             routingInterval = null;
             return;
@@ -800,7 +770,7 @@ function route() {
         currentVertex = nextVertex;
         path.push(currentVertex);
     } else {
-        vis.message = "Error: Algorithm stuck (no next vertex found).";
+        vis.message = "Error: Algorithm stuck (no next vertex found)!";
         clearInterval(routingInterval);
         routingInterval = null;
     }
