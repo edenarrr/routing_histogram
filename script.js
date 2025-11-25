@@ -486,39 +486,44 @@ function classifyVerticesAndEdges() {
     edges = [];
 
     // reset
-    for (const v of vertices) {
+    for (const v of vertices){
         v.cv = null;
         v.isLeftVertex  = false;
         v.isRightVertex = false;
     }
 
     // Build horizontal edges and set left/right endpoints
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i<n;i++){
         a = vertices[i];
         b = vertices[(i+1)%n];
-        if (a.y === b.y) { // horizontal edge
+        if (a.y === b.y){ // horizontal edge
             let left = a;
             let right = b;
-            if (b.x < a.x) { // if b is to the left of a
+            if (b.x <a.x){ // if b is to the left of a
                 left = b;
                 right = a;
             }
-            left.isLeftVertex  = true;
+            left.isLeftVertex= true;
             right.isRightVertex = true;
-            left.cv  = right;
+            left.cv= right;
             right.cv = left;
-            edges.push({ left, right, y: left.y });
+            edges.push({left, right, y: left.y});
         }
     }
 
     // Convex vs reflex using orientation determinant (to know if LT or RT)
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < n; i++){
         const prev = vertices[(i-1+n)%n];
         const v = vertices[i];
         const next = vertices[(i+1)%n];
         const det = (v.x - prev.x) * (next.y - v.y) - (v.y - prev.y) * (next.x - v.x);
-        v.isReflex = (det > 0); // RT
-        v.isConvex = (det < 0); // LT
+        if(det > 0) { // RT
+            v.isReflex = true;
+            v.isConvex = false;
+        } else if( det < 0) {
+            v.isReflex = false;
+            v.isConvex = true;
+        }
     }
 }
 
@@ -528,7 +533,6 @@ function computeNeighborsAndBounds() {
   for (const v of vertices) {
     v.neighbors = [];
   }
-
   // r-visibility neighbors
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
@@ -540,22 +544,17 @@ function computeNeighborsAndBounds() {
       }
     }
   }
-
-  // Computation of l(v) (leftmost visible neighbor) and r(v) = (rightmost visible neighbor)
+  // Computation of l(v) and r(v)
   for (const v of vertices) {
     if (v.neighbors.length === 0) continue;
-
     let l_v = v.neighbors[0];
     let r_v = v.neighbors[0];
-
     for (const n of v.neighbors) { // do it by id, because vertices are ordered counterclockwise starting at left base vertex.
         if (n.id < l_v.id) l_v = n;
         if (n.id > r_v.id) r_v = n;
     }
-
     v.l_v = l_v;
     v.r_v = r_v;
-
     // Single-bit routing table: true if left visible neighbor is higher than right
     v.routingTable = {higher_is_l: (l_v.y < r_v.y)};
   }
