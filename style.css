@@ -1,28 +1,21 @@
-/* General Body Styles */
 body {
   margin: 0;
-  padding: 2rem 1rem; /* Adds space on the top/bottom and sides */
+  padding: 2rem 1rem; 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f8f9fa; /* Light gray background */
-  color: #212529; /* Dark text for high contrast */
-  /*text-align: center;  Center-aligns the canvas inside its container */
+  background-color: #f8f9fa; 
+  color: #212529; 
 }
 
-/* The main container that centers the content */
 .content-wrapper {
-  max-width: 100%; /* allow it to be as wide as needed */
+  max-width: 100%; 
   margin: 0 auto;
   text-align: left;
-
-  /*display: flex;  center children (the canvas container) */
   flex-direction: column;
-  /*align-items: center;  <--- horizontally center #canvas-container */
 }
 
-/* Header section for the title and paragraph */
 .intro-header {
-  margin-bottom: 2.5rem; /* Creates space between the text and the app */
-  border-bottom: 1px solid #dee2e6; /* Subtle separator line */
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid #dee2e6;
   padding-bottom: 2rem;
 }
 
@@ -34,19 +27,15 @@ body {
 
 .intro-header p {
   font-size: 1.1rem;
-  line-height: 1.7; /* More line spacing for easier reading */
-  color: #495057; /* A slightly softer text color */
+  line-height: 1.7; 
+  color: #495057;
 }
 
 /* p5.js canvas */
 #canvas-container {
   position: relative;
   width: 1100px;
-  /* height: 600px; */
-
-  /* Add a subtle shadow to lift the app off the page */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  /* If your canvas has a border, this will look nice */
   border-radius: 8px;
-  display: inline-block; /* Helps the container fit the canvas size */
+  display: inline-block;
 }

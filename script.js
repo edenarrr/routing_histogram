@@ -1,4 +1,4 @@
-// --- Vertex class ---
+// Vertex class
 class Vertex {
     constructor(x, y, id) {
         this.x = x;
@@ -35,7 +35,7 @@ class Vertex {
 }
 
 
-// --- Histogram class ---
+// Histogram class
 class Histogram {
     constructor(name, vertices) {
         this.name = name;
@@ -47,7 +47,7 @@ class Histogram {
     }
 }
 
-// --- Predefined histograms ---
+// Predefined histograms
 const HISTOGRAMS = [
     new Histogram("Histogram 1", [
         new Vertex( 50,  50, 0),
@@ -141,7 +141,7 @@ const HISTOGRAMS = [
 // Pick a random histogram index in [0, HISTOGRAMS.length - 1]
 let currentHistogramIndex = Math.floor(Math.random() * HISTOGRAMS.length);
 
-// --- Layout Constants ---
+// Layout Constants
 const LOGICAL_WIDTH  = 800;
 const LOGICAL_HEIGHT = 600;
 
@@ -169,7 +169,7 @@ function sxRight(x) { return OUTER_MARGIN_X + PANEL_WIDTH + PANEL_GAP + INNER_MA
 function sy(y)      { return OUTER_MARGIN_Y + INNER_MARGIN_Y + y * SCALE_Y; }
 
 
-// --- Global Variables ---
+// Global variables
 
 let vertices = [];
 let edges = [];  // horizontal edges for breakpoint computation
@@ -277,7 +277,7 @@ function drawGrid() {
     const topY       = OUTER_MARGIN_Y;
     const bottomY    = topY + PANEL_HEIGHT;
 
-    // --- Vertical grid lines ---
+    // Vertical grid lines
     // Left box
     for (let x = leftX; x <= leftEndX; x += stepX) {
         line(x, topY, x, bottomY);
@@ -287,7 +287,7 @@ function drawGrid() {
         line(x, topY, x, bottomY);
     }
 
-    // --- Horizontal grid lines ---
+    // Horizontal grid lines
     for (let y = topY; y <= bottomY; y += stepY) {
         // left box
         line(leftX, y, leftEndX, y);
@@ -295,7 +295,7 @@ function drawGrid() {
         line(rightX, y, rightEndX, y);
     }
 
-    // --- Box outlines ---
+    // Box outlines
     stroke(0);
     strokeWeight(2);
     noFill();
@@ -454,15 +454,6 @@ function isPointInPolygon(px, py) {
     return inside;
 }
 
-/**
- * Rectilinear visibility
- * Two vertices v1 and v2 are r-visible iff the closed axis-aligned rectangle
- * between them lies inside the polygon.
- *
- * We approximate this robustly by sampling interior points:
- *  - For rectangles: sample of interior points.
- *  - For horizontal/vertical segments: sample along the segment.
- */
 function isRectilinearVisible(v1, v2) {
     if (v1.id === v2.id) return false;
 
@@ -581,8 +572,7 @@ function computeNeighborsAndBounds() {
     }
   }
 
-  // l(v) = leftmost visible neighbor
-  // r(v) = rightmost visible neighbor
+  // Computation of l(v) (leftmost visible neighbor) and r(v) = (rightmost visible neighbor)
   for (const v of vertices) {
     if (v.neighbors.length === 0) continue;
 
@@ -625,7 +615,6 @@ function computeBreakpointsAndLabels() {
         let isLeftBase = (v.id === topBaseLeft.id);
         let isRightBase = (v.id === topBaseRight.id);
 
-        // Decide which case v falls into
         let needsRightSearch = (v.isReflex && v.isRightVertex) || isLeftBase;
         let needsLeftSearch = (v.isReflex && v.isLeftVertex) || isRightBase;
 
