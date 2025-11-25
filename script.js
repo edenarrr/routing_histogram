@@ -771,21 +771,25 @@ function route() {
         } else {
             // Case 3: t is inside I(s) but not directly visible
             const { nd, fd } = getDominators(s, t);
-            const b = nd && nd.breakpoint;
 
-            if (nd && fd && b && nd.cv) {
-                const left1  = Math.min(nd.x, b.x);
-                const right1 = Math.max(nd.x, b.x);
-                const left2  = Math.min(nd.cv.x, fd.x);
-                const right2 = Math.max(nd.cv.x, fd.x);
-
-                if (t.x >= left1 && t.x <= right1) {
-                    nextVertex = nd;
-                } else if (t.x >= left2 && t.x <= right2) {
-                    nextVertex = fd;
+            // Use breakpoint of nd(s, t) to decide side of I(s, t)
+            const b = nd.breakpoint;
+            if (b && b.cv) {
+                if(s.x < t.x) { // Case explained in paper
+                    if (t.x >= nd.x && t.x <= b.x) {
+                        nextVertex = nd;
+                    } else if (t.x >= b.cv.x && t.x <= fd.x){
+                        nextVertex = fd;
+                    }
+                }
+                else { // other case (symmetric)
+                    if (t.x <= nd.x && t.x >= b.x) {
+                        nextVertex = nd;
+                    } else if (t.x <= b.cv.x && t.x >= fd.x){
+                        nextVertex = fd;
+                    }
                 }
             }
-
         }
     }
 
