@@ -11,7 +11,6 @@ class Vertex {
         this.isRightVertex = false;
         this.isReflex = false;
         this.isConvex = false;
-        this.type = null;  // {'l-reflex', 'l-convex', 'r-reflex', 'r-convex'}
 
         // Visibility graph
         this.neighbors = [];
@@ -429,6 +428,9 @@ function preprocessVertices() {
 
 // Geometry helpers
 
+/**
+ * Function used in isRectilinearVisible to check if a point (px, py) is in the polygon
+ */
 function isPointInPolygon(px, py) {
     let onBoundary = false;
     for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
@@ -453,12 +455,12 @@ function isPointInPolygon(px, py) {
 }
 
 /**
- * Rectilinear visibility (r-visibility) for our histogram.
+ * Rectilinear visibility
  * Two vertices v1 and v2 are r-visible iff the closed axis-aligned rectangle
  * between them lies inside the polygon.
  *
  * We approximate this robustly by sampling interior points:
- *  - For non-degenerate rectangles: sample a grid of interior points.
+ *  - For rectangles: sample of interior points.
  *  - For horizontal/vertical segments: sample along the segment.
  */
 function isRectilinearVisible(v1, v2) {
@@ -473,9 +475,9 @@ function isRectilinearVisible(v1, v2) {
     const height = maxY - minY;
     const eps = 1e-3;
 
-    // --- Degenerate rectangles: horizontal or vertical segment ---
+    // Horizontal or vertical segment
     if (width < eps || height < eps) {
-        // Sample along the segment (excluding exact endpoints is fine)
+        // Sample along the segment
         const steps = 10;
         for (let i = 0; i <= steps; i++) {
             const t = i / steps;
@@ -488,7 +490,7 @@ function isRectilinearVisible(v1, v2) {
         return true;
     }
 
-    // --- Non-degenerate rectangle: sample interior grid ---
+    // Normal rectangles
     const samplesX = 10;
     const samplesY = 6;
 
@@ -505,28 +507,28 @@ function isRectilinearVisible(v1, v2) {
     return true;
 }
 
-// --- Vertex Classification & Edges ---
+// Vertex classification and edges
 
 function classifyVerticesAndEdges() {
     const n = vertices.length;
     edges = [];
 
-    // --- 1) Reset flags ---
+    // Reset
     for (const v of vertices) {
         v.cv = null;
         v.isLeftVertex  = false;
         v.isRightVertex = false;
     }
 
-    // --- 2) Build horizontal edges and set left/right endpoints by x-coordinate ---
+    // Build horizontal edges and set left/right endpoints
     for (let i = 0; i < n; i++) {
         const a = vertices[i];
         const b = vertices[(i + 1) % n];
 
-        if (a.y === b.y) {              // horizontal edge
+        if (a.y === b.y) { // horizontal edge
             let left = a;
             let right = b;
-            if (b.x < a.x) {            // swap if needed
+            if (b.x < a.x) { // swap if needed
                 left = b;
                 right = a;
             }
@@ -541,7 +543,7 @@ function classifyVerticesAndEdges() {
         }
     }
 
-    // --- 3) Convex vs reflex using orientation cross product ---
+    // Convex vs reflex using orientation cross product
     for (let i = 0; i < n; i++) {
         const prev = vertices[(i - 1 + n) % n];
         const v    = vertices[i];
@@ -555,15 +557,11 @@ function classifyVerticesAndEdges() {
 
         v.isReflex = (cross > 0);
         v.isConvex = (cross < 0);
-
-        const lr  = v.isLeftVertex ? "l" : (v.isRightVertex ? "r" : "?");
-        const ang = v.isReflex ? "reflex" : (v.isConvex ? "convex" : "flat");
-        v.type = `${lr}-${ang}`;   // e.g., "l-reflex", "r-convex"
     }
 }
 
 
-// Visibility Graph, bounds ℓ(v), r(v) 
+// Visibility graph, bounds l(v), r(v) 
 
 function computeNeighborsAndBounds() {
   const n = vertices.length;
@@ -584,15 +582,15 @@ function computeNeighborsAndBounds() {
     }
   }
 
-  // ℓ(v) = argmin{wid | w ∈ N(v)} : leftmost visible neighbor
-  // r(v) = argmax{wid | w ∈ N(v)} : rightmost visible neighbor
+  // l(v) = leftmost visible neighbor
+  // r(v) = rightmost visible neighbor
   for (const v of vertices) {
     if (v.neighbors.length === 0) continue;
 
     let l_v = v.neighbors[0];
     let r_v = v.neighbors[0];
 
-    for (const n of v.neighbors) {
+    for (const n of v.neighbors) { // do it by id, because vertices are ordered anticlockwise starting at left base vertex.
         if (n.id < l_v.id) l_v = n;
         if (n.id > r_v.id) r_v = n;
     }
@@ -602,7 +600,7 @@ function computeNeighborsAndBounds() {
 
     // Single-bit routing table: true if left visible neighbor is higher than right
     v.routingTable = {
-      higher_is_l: (l_v.y < r_v.y)   // smaller y = higher
+      higher_is_l: (l_v.y < r_v.y)
     };
   }
 }
@@ -611,10 +609,10 @@ function computeNeighborsAndBounds() {
 // Breakpoints and labels
 
 function computeBreakpointsAndLabels() {
-    // Breakpoint br(v) as in the paper, approximated for screen coordinates
-    // For r-reflex and left base vertices: left endpoint of a horizontal edge
-    // to the right and below v, visible from v, with minimal vertical distance.
-    // For l-reflex and right base vertices: symmetric to the left.
+    // Breakpoint br(v), only computed for reflex and base vertices
+    // For r-reflex and left base vertices: left endpoint of a horizontal  
+    // edge with the highest y coord to the right of and below v visible from v
+    // For l-reflex and right base vertices: symmetric to the left
     for (const v of vertices) {
         v.breakpoint = null;
         v.label.id   = v.id;
@@ -635,38 +633,36 @@ function computeBreakpointsAndLabels() {
         let chosenBreakpoint = null;
 
         if (needsRightSearch) {
-    // r-reflex or left base: search to the right (or aligned) and below
-    let bestEdge = null;
-    for (const e of edges) {
-        if (e.left.x < v.x) continue;     // strictly left -> skip
-        if (e.y <= v.y) continue;         // must be below (larger y on screen)
-        if (!isRectilinearVisible(v, e.left)) continue;
-
-        if (!bestEdge || (e.y - v.y) < (bestEdge.y - v.y)) {
-            bestEdge = e;                 // closest below v
+            // r-reflex or left base: search to the right (or aligned) and below
+            let bestEdge = null;
+            for (const e of edges) {
+                if (e.left.x < v.x) continue; // strictly left -> skip
+                if (e.y <= v.y) continue; // must be below (larger y, bcs p5.js y coordinates are inverted)
+                if (!isRectilinearVisible(v, e.left)) continue;  // must be visible
+                if (!bestEdge || e.y < bestEdge.y) {
+                    bestEdge = e; // closest below v
+                }
+            }
+            if (bestEdge) {
+                chosenBreakpoint = bestEdge.left;
+            }
         }
-    }
-    if (bestEdge) {
-        chosenBreakpoint = bestEdge.left;
-    }
-}
 
-if (needsLeftSearch && !chosenBreakpoint) {
-    // l-reflex or right base: search to the left (or aligned) and below
-    let bestEdge = null;
-    for (const e of edges) {
-        if (e.right.x > v.x) continue;    // strictly right -> skip
-        if (e.y <= v.y) continue;         // must be below
-        if (!isRectilinearVisible(v, e.right)) continue;
-
-        if (!bestEdge || (e.y - v.y) < (bestEdge.y - v.y)) {
-            bestEdge = e;
+        if (needsLeftSearch && !chosenBreakpoint) {
+            // l-reflex or right base: search to the left (or aligned) and below
+            let bestEdge = null;
+            for (const e of edges) {
+                if (e.right.x > v.x) continue; // strictly right -> skip
+                if (e.y <= v.y) continue; // must be below
+                if (!isRectilinearVisible(v, e.right)) continue; // must be visible
+                if (!bestEdge || e.y < bestEdge.y) {
+                    bestEdge = e;
+                }
+            }
+            if (bestEdge) {
+                chosenBreakpoint = bestEdge.right;
+            }
         }
-    }
-    if (bestEdge) {
-        chosenBreakpoint = bestEdge.right;
-    }
-}
 
 
         if (chosenBreakpoint) {
@@ -679,7 +675,7 @@ if (needsLeftSearch && !chosenBreakpoint) {
 // Dominators and routing
 
 function getDominators(s, t) {
-    const eps = 1e-6;
+    const eps = 1e-6; // Necessary, bcs of floating point inaccuracy
     let nd = null;
     let fd = null;
 
@@ -749,28 +745,24 @@ function route() {
     const t = targetVertex;
     let nextVertex = null;
 
-    // if (!s.neighbors || s.neighbors.length === 0 || !s.l_v || !s.r_v) {
-    //     vis.message = "Error: current vertex has no visibility data.";
-    //     clearInterval(routingInterval);
-    //     routingInterval = null;
-    //     return;
-    // }
-
     // Case 1: Target is a direct neighbor.
     if (s.isNeighbor(t)) {
         nextVertex = t;
     } else {
-        // Check if t is in the interval I(s) = [ℓ(s), r(s)].
-        const minId = Math.min(s.l_v.id, s.r_v.id);
-        const maxId = Math.max(s.l_v.id, s.r_v.id);
-        const tInIs = (t.id >= minId && t.id <= maxId);
+        // Check if t is in the interval I(s) = [l(s), r(s)].
+        const minX = Math.min(s.l_v.x, s.r_v.x);
+        const maxX = Math.max(s.l_v.x, s.r_v.x);
+        const tInIs = (t.x >= minX && t.x <= maxX);
 
         if (!tInIs) {
             // Case 2: t is outside the interval I(s)
-            nextVertex = s.routingTable.higher_is_l ? s.l_v : s.r_v;
+            if(s.routingTable.higher_is_l) 
+                nextVertex = s.l_v;
+            else
+                nextVertex = s.r_v;
         } else {
             // Case 3: t is inside I(s) but not directly visible
-            const { nd, fd } = getDominators(s, t);
+            const {nd, fd} = getDominators(s, t);
 
             // Use breakpoint of nd(s, t) to decide side of I(s, t)
             const b = nd.breakpoint;
@@ -792,7 +784,6 @@ function route() {
             }
         }
     }
-
     // State update or loop detected
     if (nextVertex) {
         if (path.some(p => p.id === nextVertex.id)) {
