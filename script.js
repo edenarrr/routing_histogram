@@ -679,36 +679,61 @@ if (needsLeftSearch && !chosenBreakpoint) {
 // Dominators and routing
 
 function getDominators(s, t) {
-    // Near dominator nd(s, t): rightmost neighbor not to the right of t
-    // Far dominator fd(s, t): leftmost neighbor not to the left of t
     const eps = 1e-6;
     let nd = null;
     let fd = null;
 
-    for (const n of s.neighbors) {
-        if (n.id === s.id) continue;
+    if (s.x < t.x) {
+        // Case in the paper: t is to the right of s
+        for (const n of s.neighbors) {
+            if (n === s) continue;
 
-        // candidate for nd: x <= t.x
-        if (n.x <= t.x + eps) {
-            if (!nd ||
-                n.x > nd.x + eps ||
-                (Math.abs(n.x - nd.x) <= eps && n.y > nd.y)) { // closer to base (larger y)
-                nd = n;
+            // near dominator: rightmost neighbor not to the right of t
+            if (n.x <= t.x + eps) {
+                if (!nd ||
+                    n.x > nd.x + eps ||
+                    (Math.abs(n.x - nd.x) <= eps && n.y > nd.y)) {
+                    nd = n;
+                }
+            }
+
+            // far dominator: leftmost neighbor not to the left of t
+            if (n.x >= t.x - eps) {
+                if (!fd ||
+                    n.x < fd.x - eps ||
+                    (Math.abs(n.x - fd.x) <= eps && n.y > fd.y)) {
+                    fd = n;
+                }
             }
         }
+    } else {
+        // Symmetric case: t is to the LEFT of s
+        for (const n of s.neighbors) {
+            if (n === s) continue;
 
-        // candidate for fd: x >= t.x
-        if (n.x >= t.x - eps) {
-            if (!fd ||
-                n.x < fd.x - eps ||
-                (Math.abs(n.x - fd.x) <= eps && n.y > fd.y)) {
-                fd = n;
+            // near dominator: leftmost neighbor not to the left of t
+            if (n.x >= t.x - eps) {
+                if (!nd ||
+                    n.x < nd.x - eps ||
+                    (Math.abs(n.x - nd.x) <= eps && n.y > nd.y)) {
+                    nd = n;
+                }
+            }
+
+            // far dominator: rightmost neighbor not to the right of t
+            if (n.x <= t.x + eps) {
+                if (!fd ||
+                    n.x > fd.x + eps ||
+                    (Math.abs(n.x - fd.x) <= eps && n.y > fd.y)) {
+                    fd = n;
+                }
             }
         }
     }
 
     return { nd, fd };
 }
+
 
 function route() {
     if (!currentVertex || !targetVertex) return;
@@ -746,16 +771,21 @@ function route() {
         } else {
             // Case 3: t is inside I(s) but not directly visible
             const { nd, fd } = getDominators(s, t);
+            const b = nd && nd.breakpoint;
 
-            // Use breakpoint of nd(s, t) to decide side of I(s, t)
-            const b = nd.breakpoint;
-            if (b && b.cv) {
-                if (t.x >= nd.x && t.x <= b.x) {
+            if (nd && fd && b && nd.cv) {
+                const left1  = Math.min(nd.x, b.x);
+                const right1 = Math.max(nd.x, b.x);
+                const left2  = Math.min(nd.cv.x, fd.x);
+                const right2 = Math.max(nd.cv.x, fd.x);
+
+                if (t.x >= left1 && t.x <= right1) {
                     nextVertex = nd;
-                } else if (t.x >= b.cv.x && t.x <= fd.x){
+                } else if (t.x >= left2 && t.x <= right2) {
                     nextVertex = fd;
                 }
             }
+
         }
     }
 
