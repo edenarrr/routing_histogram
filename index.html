@@ -58,7 +58,7 @@
   <li><strong>Corresponding Vertex cv(v):</strong> The other vertex that shares the same horizontal edge as v.</li>
   <li><strong>Left/Right Bounding Vertices \( \ell(v) \) and r(v):</strong> From a vertex v, \( \ell(v) \) is the leftmost visible vertex closest to the base edge, and r(v) is defined analogously.</li>
   <li><strong>Interval I(s):</strong> The set of all vertices located horizontally between \( \ell(s) \) and r(s), defined as [\( \ell(s) \), r(s)]. A key first step in routing is to check if the target t is within the current interval I(s).</li>
-  <li><strong>Near/Far Dominators nd(s, t) and fd(s, t):</strong> These are crucial when the target t is inside the current interval I(s) but not directly visible. The <strong>near dominator nd(s, t)</strong> is the rightmost neighbor of s that is to the left of t. The <strong>far dominator fd(s, t)</strong> is the leftmost neighbor of s that is to the right of t. These two vertices effectively "gate" the region containing the target.</li>
+  <li><strong>Near/Far Dominators nd(s, t) and fd(s, t):</strong> These are crucial when the target t is inside the current interval I(s) but not directly visible. Let's assume that <strong>s<sub>x</sub> &lt t<sub>x</sub></strong>, the other case is symmetric. The <strong>near dominator nd(s, t)</strong> is the rightmost neighbor of s that is to the left of t. The <strong>far dominator fd(s, t)</strong> is the leftmost neighbor of s that is to the right of t. These two vertices effectively "gate" the region containing the target.</li>
   <li><strong>Interval between Dominators I(s, t):</strong> This is a more specific interval, defined as [nd(s, t), fd(s, t)]. It contains all vertices that lie horizontally between the near and far dominators. When t is in I(s), the algorithm's next goal is to figure out how to get into this sub-interval.</li>
   <li><strong>Breakpoint br(v):</strong> This applies to reflex and base vertices and is a key part of the vertex label. For an r-reflex vertex or a left base vertex v, its breakpoint br(v) is the highest visible vertex to its right that is below it. Analogous definitions apply to l-reflex vertices and the right base vertex. This landmark essentially acts as an "escape route" from the pocket created by the reflex vertex.</li>
 </ul>
@@ -78,8 +78,8 @@
     <ul>
       <li><strong>Label lab(v): </strong></li>
       <ul>
-        <li>lab(v) = v_id, if v is not a base vertex and a convex vertex</li>
-        <li>lab(v) = (v_id, br(v)_id), if v is a base vertex or a reflex vertex</li>
+        <li>lab(v) = v<sub>id</sub>, if v is not a base vertex and a convex vertex</li>
+        <li>lab(v) = (v<sub>id</sub>, br(v)<sub>id</sub>), if v is a base vertex or a reflex vertex</li>
       </ul>
       <li><strong>Routing table p(v): </strong>a bit that says whether \( \ell(s) \) is higher than r(v) or not</li>
       <li><strong>Link table: </strong>a list of lables of all r-visible neighbors</li>
@@ -115,7 +115,7 @@
     <h4>Case 3: Target t is inside the interval I(s) but not directly visible</h4>
     This is the most interesting case.
 
-    In this case, two special neighbors are computed:
+    Let's assume <strong>s<sub>x</sub> &lt t<sub>x</sub></strong>, the other case is symmetric. In this case, two special neighbors are computed:
     <ul>
       <li><strong>Near dominator nd(s, t):</strong> the rightmost neighbor of s with x ≤ x(t)</li>
       <li><strong>Far dominator fd(s, t):</strong>the leftmost neighbor of s with x ≥ x(t)</li>
