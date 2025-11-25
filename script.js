@@ -473,10 +473,9 @@ function isRectilinearVisible(v1, v2) {
 
     const width = maxX - minX;
     const height = maxY - minY;
-    const eps = 1e-3;
 
     // Horizontal or vertical segment
-    if (width < eps || height < eps) {
+    if (width == 0 || height == 0) {
         // Sample along the segment
         const steps = 10;
         for (let i = 0; i <= steps; i++) {
@@ -675,7 +674,6 @@ function computeBreakpointsAndLabels() {
 // Dominators and routing
 
 function getDominators(s, t) {
-    const eps = 1e-6; // Necessary, bcs of floating point inaccuracy
     let nd = null;
     let fd = null;
 
@@ -685,19 +683,19 @@ function getDominators(s, t) {
             if (n === s) continue;
 
             // near dominator: rightmost neighbor not to the right of t
-            if (n.x <= t.x + eps) {
+            if (n.x <= t.x) {
                 if (!nd ||
-                    n.x > nd.x + eps ||
-                    (Math.abs(n.x - nd.x) <= eps && n.y > nd.y)) {
+                    n.x > nd.x ||
+                    (n.x - nd.x == 0 && n.y > nd.y)) {
                     nd = n;
                 }
             }
 
             // far dominator: leftmost neighbor not to the left of t
-            if (n.x >= t.x - eps) {
+            if (n.x >= t.x) {
                 if (!fd ||
-                    n.x < fd.x - eps ||
-                    (Math.abs(n.x - fd.x) <= eps && n.y > fd.y)) {
+                    n.x < fd.x ||
+                    (n.x - fd.x == 0 && n.y > fd.y)) {
                     fd = n;
                 }
             }
@@ -708,19 +706,19 @@ function getDominators(s, t) {
             if (n === s) continue;
 
             // near dominator: leftmost neighbor not to the left of t
-            if (n.x >= t.x - eps) {
+            if (n.x >= t.x) {
                 if (!nd ||
-                    n.x < nd.x - eps ||
-                    (Math.abs(n.x - nd.x) <= eps && n.y > nd.y)) {
+                    n.x < nd.x ||
+                    (n.x - nd.x == 0 && n.y > nd.y)) {
                     nd = n;
                 }
             }
 
             // far dominator: rightmost neighbor not to the right of t
-            if (n.x <= t.x + eps) {
+            if (n.x <= t.x) {
                 if (!fd ||
-                    n.x > fd.x + eps ||
-                    (Math.abs(n.x - fd.x) <= eps && n.y > fd.y)) {
+                    n.x > fd.x ||
+                    (n.x - fd.x == 0 && n.y > fd.y)) {
                     fd = n;
                 }
             }
