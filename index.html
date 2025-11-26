@@ -83,8 +83,8 @@
         <li>lab(v) = v<sub>id</sub>, if v is not a base vertex and a convex vertex</li>
         <li>lab(v) = (v<sub>id</sub>, br(v)<sub>id</sub>), if v is a base vertex or a reflex vertex</li>
       </ul>
-      <li><strong>Routing table p(v): </strong>a bit that says whether \( \ell(s) \) is higher than r(v) or not</li>
-      <li><strong>Link table: </strong>a list of lables of all r-visible neighbors</li>
+      <li><strong>Routing table p(v): </strong>a bit that says whether \( \ell(v) \) is higher than r(v) or not</li>
+      <li><strong>Link table: </strong>a list of labels of all r-visible neighbors</li>
       <li><strong>Landmarks: </strong></li>
       <ul>
         <li><strong>cv(v): </strong>corresponding vertex (other endpoint of its horizontal edge)</li>
@@ -109,7 +109,7 @@
     That means the current vertex is inside a "pocket" of the histogram and we need to escape it. We do that by using the 1-bit routing table (made during the preprocessing):
     <ul>
       <li>If \( \ell(v) \) is higher → go to \( \ell(v) \)</li>
-      <li>Else → go to r(s)</li>
+      <li>Else → go to r(v)</li>
     </ul>
 
     This guarantees that we climb towards the top of the histogram (and escape the pocket we were in).
