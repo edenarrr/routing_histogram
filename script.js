@@ -146,8 +146,8 @@ const PANEL_HEIGHT = 450;  // height of each box on screen
 const PANEL_GAP    = 80;   // horizontal space between boxes
 
 // Outer margin: space between canvas border and each box
-const OUTER_MARGIN_X = 50;
-const OUTER_MARGIN_Y = 50;
+const OUTER_MARGIN_X = 30;
+const OUTER_MARGIN_Y = 30;
 
 // Inner margins inside each box (space between box border and histogram/graph)
 const INNER_MARGIN_X = 20;
