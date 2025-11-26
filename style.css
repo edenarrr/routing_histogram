@@ -37,5 +37,6 @@ body {
   width: 1140px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  display: inline-block;
+  display: block;
+  margin: 0 auto;
 }
